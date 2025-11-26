@@ -90,6 +90,34 @@ class RoboZigueZague(Robo):
             self.kill()
 
 
+class RoboLento(Robo):
+    def __init__(self, x, y):
+        super().__init__(x, y, velocidade=2)
+        self.image.fill((0, 0, 255))  
+
+    def atualizar_posicao(self):
+        self.rect.y += self.velocidade
+
+    def update(self):
+        self.atualizar_posicao()
+        if self.rect.y > ALTURA:
+            self.kill()
+
+
+class RoboRapido(Robo):
+    def __init__(self, x, y):
+        super().__init__(x, y, velocidade=6)
+        self.image.fill((255, 165, 0)) 
+
+    def atualizar_posicao(self):
+        self.rect.y += self.velocidade
+
+    def update(self):
+        self.atualizar_posicao()
+        if self.rect.y > ALTURA:
+            self.kill()
+
+
 todos_sprites = pygame.sprite.Group()
 inimigos = pygame.sprite.Group()
 tiros = pygame.sprite.Group()
@@ -117,7 +145,16 @@ while rodando:
     # timer de entrada dos inimigos
     spawn_timer += 1
     if spawn_timer > 40:
-        robo = RoboZigueZague(random.randint(40, LARGURA - 40), -40)
+        tipo = random.choice(["zigue", "lento", "rapido"])
+        x_spawn = random.randint(40, LARGURA - 40)
+
+        if tipo == "zigue":
+            robo = RoboZigueZague(x_spawn, -40)
+        elif tipo == "lento":
+            robo = RoboLento(x_spawn, -40)
+        else:
+            robo = RoboRapido(x_spawn, -40)
+
         todos_sprites.add(robo)
         inimigos.add(robo)
         spawn_timer = 0
@@ -146,5 +183,4 @@ while rodando:
     TELA.blit(texto, (10, 10))
 
     pygame.display.flip()
-
 pygame.quit()
