@@ -12,6 +12,18 @@ FPS = 60
 clock = pygame.time.Clock()
 
 
+animacao_morte = []
+numero_de_frames_morte = 8 
+
+for i in range(1, numero_de_frames_morte + 1):
+    try:
+        img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
+        img = pygame.transform.scale(img, (100, 100)) 
+        animacao_morte.append(img)
+    except pygame.error as e:
+        print(f"Erro ao carregar frame da explosão {i}: {e}")
+        break
+
 # CLASSE BASE
 class Entidade(pygame.sprite.Sprite):
     def __init__(self, x, y, velocidade):
@@ -35,13 +47,13 @@ class Jogador(Entidade):
     def update(self):
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_w]:
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
             self.mover(0, -self.velocidade)
-        if keys[pygame.K_s]:
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
             self.mover(0, self.velocidade)
-        if keys[pygame.K_a]:
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.mover(-self.velocidade, 0)
-        if keys[pygame.K_d]:
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.mover(self.velocidade, 0)
 
         # limites de tela
@@ -117,8 +129,49 @@ class RoboRapido(Robo):
         if self.rect.y > ALTURA:
             self.kill()
 
+# classe para o fundo do jogo 
+class Fundo(pygame.sprite.Sprite):
+    def __init__(self, imagem_path):
+        super().__init__()
+        self.image = pygame.image.load(imagem_path).convert()
+        self.image = pygame.transform.scale(self.image, (LARGURA, ALTURA))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (0, 0)
+
+# classe para a explosão
+class Explosao(pygame.sprite.Sprite):
+    def __init__(self, centro_x, centro_y, animacao_frames):
+        super().__init__()
+        self.frames = animacao_frames
+        
+        self.frame_atual = 0
+        self.ultima_atualizacao = pygame.time.get_ticks()
+        self.velocidade_animacao = 50 
+        
+        self.image = self.frames[self.frame_atual]
+        self.rect = self.image.get_rect(center=(centro_x, centro_y))
+        
+    def update(self):
+        agora = pygame.time.get_ticks()
+
+        if agora - self.ultima_atualizacao > self.velocidade_animacao:
+            self.ultima_atualizacao = agora
+            self.frame_atual += 1
+
+            if self.frame_atual < len(self.frames):
+                self.image = self.frames[self.frame_atual]
+                centro = self.rect.center 
+                self.rect = self.image.get_rect(center=centro)
+            else:
+                self.kill() 
+
 
 todos_sprites = pygame.sprite.Group()
+
+# criando o fundo
+fundo_sprite = Fundo('sprites/fundo/fundo.png') 
+todos_sprites.add(fundo_sprite)
+
 inimigos = pygame.sprite.Group()
 tiros = pygame.sprite.Group()
 
@@ -161,7 +214,17 @@ while rodando:
 
     # colisão tiro x robô
     colisao = pygame.sprite.groupcollide(inimigos, tiros, True, True)
-    pontos += len(colisao)
+
+    # acionando a animação de explosão
+    for robo_destruido in colisao.keys():
+        pontos += len(colisao)
+        
+        centro_x = robo_destruido.rect.centerx
+        centro_y = robo_destruido.rect.centery
+        
+        if animacao_morte: 
+            explosao = Explosao(centro_x, centro_y, animacao_morte)
+            todos_sprites.add(explosao) 
 
     # colisão robô x jogador
     if pygame.sprite.spritecollide(jogador, inimigos, True):
