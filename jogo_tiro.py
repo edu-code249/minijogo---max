@@ -11,7 +11,7 @@ pygame.display.set_caption("Robot Defense - Template")
 FPS = 60
 clock = pygame.time.Clock()
 
-
+# carregando sprite de morte dos robôs
 animacao_morte = []
 numero_de_frames_morte = 8 
 
@@ -23,6 +23,37 @@ for i in range(1, numero_de_frames_morte + 1):
     except pygame.error as e:
         print(f"Erro ao carregar frame da explosão {i}: {e}")
         break
+
+# carregando sprite do tiro
+animacao_tiro = []
+numero_de_frames_tiro = 4
+for i in range(1, numero_de_frames_tiro + 1):
+    try:
+        img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
+        img = pygame.transform.scale(img, (32, 32)) 
+        animacao_tiro.append(img)
+    except pygame.error as e:
+        print(f"Erro ao carregar frame do tiro {i}: {e}")
+        break
+
+# carregando os sprites do coração e dos pontos
+maximo_vida = 5
+sprite_coracao = None
+sprite_coracao_vazio = None
+
+try:
+    sprite_coracao = pygame.image.load('sprites/coracao/coracao_azul.png').convert_alpha()
+    sprite_coracao = pygame.transform.scale(sprite_coracao, (40, 40))
+
+    sprite_coracao_vazio = pygame.image.load('sprites/coracao/coracao_preto.png').convert_alpha()
+    sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
+    
+    fonte = pygame.font.SysFont(None, 36)
+
+except pygame.error as e:
+    print(f"Erro ao carregar sprite do HUD: {e}")
+    sprite_coracao = None
+    sprite_coracao_vazio = None
 
 # CLASSE BASE
 class Entidade(pygame.sprite.Sprite):
@@ -63,12 +94,32 @@ class Jogador(Entidade):
 
 # TIRO (DO JOGADOR)
 class Tiro(Entidade):
-    def __init__(self, x, y):
+    def __init__(self, x, y, animacao_frames):
         super().__init__(x, y, 10)
-        self.image.fill((255, 255, 0))  # amarelo
+        self.image = animacao_tiro[0]  
+        self.frames = animacao_frames
+
+        if not self.frames:
+            self.image = pygame.Surface((32, 32)) 
+            self.image.fill((255, 255, 0)) 
+        else:
+            self.frame_atual = 0
+            self.image = self.frames[self.frame_atual]
+            self.ultima_atualizacao = pygame.time.get_ticks()
+            self.velocidade_animacao = 100 
+        self.rect = self.image.get_rect(center=(x, y))
 
     def update(self):
         self.rect.y -= self.velocidade
+        if self.frames:
+            agora = pygame.time.get_ticks()
+            if agora - self.ultima_atualizacao > self.velocidade_animacao:
+                self.ultima_atualizacao = agora
+                self.frame_atual += 1
+                if self.frame_atual >= len(self.frames):
+                    self.frame_atual = 0
+                self.image = self.frames[self.frame_atual]
+
         if self.rect.y < 0:
             self.kill()
 
@@ -165,6 +216,27 @@ class Explosao(pygame.sprite.Sprite):
             else:
                 self.kill() 
 
+# carregando imagens do HUD
+def desenhar_hud(tela, jogador_vida, pontos):
+    if sprite_coracao and sprite_coracao_vazio:
+        x_inicial = 10
+        y_pos = 10
+
+        for i in range(maximo_vida):
+            if i < jogador_vida:
+                sprite_a_desenhar = sprite_coracao
+            else:
+                sprite_a_desenhar = sprite_coracao_vazio
+            tela.blit(sprite_a_desenhar, (x_inicial + i * 45, y_pos))  
+    else:
+        texto_vida = fonte.render(f"Vida: {jogador_vida}", True, (255, 255, 255))
+        tela.blit(texto_vida, (10, 10))
+
+    texto_pontos = fonte.render(f"{pontos}", True, (255, 255, 255))
+    x_texto = LARGURA - 10 - texto_pontos.get_width()
+    texto_backup = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
+    tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
+
 
 todos_sprites = pygame.sprite.Group()
 
@@ -191,7 +263,7 @@ while rodando:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                tiro = Tiro(jogador.rect.centerx, jogador.rect.y)
+                tiro = Tiro(jogador.rect.centerx, jogador.rect.y, animacao_tiro) 
                 todos_sprites.add(tiro)
                 tiros.add(tiro)
 
@@ -239,11 +311,7 @@ while rodando:
     # desenhar
     TELA.fill((20, 20, 20))
     todos_sprites.draw(TELA)
-
-    #Painel de pontos e vida
-    font = pygame.font.SysFont(None, 30)
-    texto = font.render(f"Vida: {jogador.vida}  |  Pontos: {pontos}", True, (255, 255, 255))
-    TELA.blit(texto, (10, 10))
+    desenhar_hud(TELA, jogador.vida, pontos)
 
     pygame.display.flip()
 pygame.quit()
