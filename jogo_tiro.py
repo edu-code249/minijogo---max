@@ -152,7 +152,7 @@ class RoboZigueZague(Robo):
         if self.rect.y > ALTURA:
             self.kill()
 
-
+# robô lento
 class RoboLento(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade=2)
@@ -166,13 +166,58 @@ class RoboLento(Robo):
         if self.rect.y > ALTURA:
             self.kill()
 
-
+# robô rapido
 class RoboRapido(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade=6)
         self.image.fill((255, 165, 0)) 
 
     def atualizar_posicao(self):
+        self.rect.y += self.velocidade
+
+    def update(self):
+        self.atualizar_posicao()
+        if self.rect.y > ALTURA:
+            self.kill()
+
+# robô saltador
+class RoboSaltador(Robo):
+    def __init__(self, x, y):
+        super().__init__(x, y, velocidade=3)
+        self.image.fill((100, 255, 100))  # roxo
+        self.contador_salto = 0
+        self.salto_intervalo = random.randint(40, 90)  # tempo entre saltos
+        self.forca_salto = random.randint(8, 14)
+
+    def atualizar_posicao(self):
+        self.rect.y += self.velocidade
+
+        # contador para decidir a hora de saltar
+        self.contador_salto += 4
+        if self.contador_salto >= self.salto_intervalo:
+            self.rect.y += self.forca_salto
+            self.contador_salto = 0
+
+    def update(self):
+        self.atualizar_posicao()
+        if self.rect.y > ALTURA:
+            self.kill()
+
+# robô caçador
+class RoboCacador(Robo):
+    def __init__(self, x, y, jogador):
+        super().__init__(x, y, velocidade=4)
+        self.jogador = jogador
+        self.image.fill((255, 0, 255))  # rosa
+
+    def atualizar_posicao(self):
+        # seguir o jogador horizontalmente
+        if self.jogador.rect.centerx < self.rect.centerx:
+            self.rect.x -= 2
+        elif self.jogador.rect.centerx > self.rect.centerx:
+            self.rect.x += 2
+
+        # avança para baixo
         self.rect.y += self.velocidade
 
     def update(self):
@@ -270,15 +315,20 @@ while rodando:
     # timer de entrada dos inimigos
     spawn_timer += 1
     if spawn_timer > 40:
-        tipo = random.choice(["zigue", "lento", "rapido"])
+        tipo = random.choice(["zigue", "lento", "rapido", "saltador", "cacador"])
         x_spawn = random.randint(40, LARGURA - 40)
 
         if tipo == "zigue":
             robo = RoboZigueZague(x_spawn, -40)
         elif tipo == "lento":
             robo = RoboLento(x_spawn, -40)
-        else:
+        elif tipo == "rapido":
             robo = RoboRapido(x_spawn, -40)
+        elif tipo == "saltador":
+            robo = RoboSaltador(x_spawn, -40)
+        elif tipo == "cacador":
+            robo = RoboCacador(x_spawn, -40, jogador)
+
 
         todos_sprites.add(robo)
         inimigos.add(robo)
