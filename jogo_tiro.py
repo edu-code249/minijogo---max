@@ -14,46 +14,46 @@ clock = pygame.time.Clock()
 # carregando sprite de morte dos robôs
 animacao_morte = []
 numero_de_frames_morte = 8 
+som_explosao = pygame.mixer.Sound('sons/explosao/som_explosao.wav')
+som_explosao.set_volume(0.3)
 
 for i in range(1, numero_de_frames_morte + 1):
-    try:
-        img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
-        img = pygame.transform.scale(img, (100, 100)) 
-        animacao_morte.append(img)
-    except pygame.error as e:
-        print(f"Erro ao carregar frame da explosão {i}: {e}")
-        break
+    img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (100, 100)) 
+    animacao_morte.append(img)
+    
 
 # carregando sprite do tiro
 animacao_tiro = []
 numero_de_frames_tiro = 4
+som_tiro = pygame.mixer.Sound('sons/tiro/som_tiro.wav')
+som_tiro.set_volume(0.2)
+
 for i in range(1, numero_de_frames_tiro + 1):
-    try:
-        img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
-        img = pygame.transform.scale(img, (32, 32)) 
-        animacao_tiro.append(img)
-    except pygame.error as e:
-        print(f"Erro ao carregar frame do tiro {i}: {e}")
-        break
+    img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (32, 32)) 
+    animacao_tiro.append(img)
 
 # carregando os sprites do coração e dos pontos
 maximo_vida = 5
-sprite_coracao = None
-sprite_coracao_vazio = None
 
-try:
-    sprite_coracao = pygame.image.load('sprites/coracao/coracao_azul.png').convert_alpha()
-    sprite_coracao = pygame.transform.scale(sprite_coracao, (40, 40))
+sprite_coracao = pygame.image.load('sprites/coracao/coracao_azul.png').convert_alpha()
+sprite_coracao = pygame.transform.scale(sprite_coracao, (40, 40))
 
-    sprite_coracao_vazio = pygame.image.load('sprites/coracao/coracao_preto.png').convert_alpha()
-    sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
+sprite_coracao_vazio = pygame.image.load('sprites/coracao/coracao_preto.png').convert_alpha()
+sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
     
-    fonte = pygame.font.SysFont(None, 36)
+fonte = pygame.font.SysFont(None, 36)
 
-except pygame.error as e:
-    print(f"Erro ao carregar sprite do HUD: {e}")
-    sprite_coracao = None
-    sprite_coracao_vazio = None
+
+# carregando frames dos robôs e do personagem principal
+numero_frames_entidade = 6
+animacao_player = []
+animacao_robo_lento = []
+animacao_robo_rapido = []
+animacao_robo_zigue_zag = []
+animacao_saltador = []
+animacao_cacador = []
 
 # CLASSE BASE
 class Entidade(pygame.sprite.Sprite):
@@ -277,8 +277,6 @@ def desenhar_hud(tela, jogador_vida, pontos):
         texto_vida = fonte.render(f"Vida: {jogador_vida}", True, (255, 255, 255))
         tela.blit(texto_vida, (10, 10))
 
-    texto_pontos = fonte.render(f"{pontos}", True, (255, 255, 255))
-    x_texto = LARGURA - 10 - texto_pontos.get_width()
     texto_backup = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
     tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
 
@@ -311,6 +309,8 @@ while rodando:
                 tiro = Tiro(jogador.rect.centerx, jogador.rect.y, animacao_tiro) 
                 todos_sprites.add(tiro)
                 tiros.add(tiro)
+            if som_tiro:
+                som_tiro.play()
 
     # timer de entrada dos inimigos
     spawn_timer += 1
@@ -347,6 +347,8 @@ while rodando:
         if animacao_morte: 
             explosao = Explosao(centro_x, centro_y, animacao_morte)
             todos_sprites.add(explosao) 
+            if som_explosao:
+                som_explosao.play()
 
     # colisão robô x jogador
     if pygame.sprite.spritecollide(jogador, inimigos, True):
