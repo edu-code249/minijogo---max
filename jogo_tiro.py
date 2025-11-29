@@ -309,8 +309,8 @@ while rodando:
                 tiro = Tiro(jogador.rect.centerx, jogador.rect.y, animacao_tiro) 
                 todos_sprites.add(tiro)
                 tiros.add(tiro)
-            if som_tiro:
-                som_tiro.play()
+                if som_tiro:
+                    som_tiro.play()
 
     # timer de entrada dos inimigos
     spawn_timer += 1
