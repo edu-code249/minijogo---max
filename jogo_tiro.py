@@ -315,7 +315,7 @@ def tela_game_over():
                             (40, 40, 180), (70, 70, 250), fonte)
     botao_sair = Botao("Sair", x_inicial + largura_botao + espaco, y_botoes,
                        largura_botao, altura_botao,
-                       (180, 40, 40), (250, 70, 70), fonte)
+                       (40, 40, 180), (70, 70, 250), fonte)
 
     game_over = True
     while game_over:
@@ -334,7 +334,7 @@ def tela_game_over():
 
         TELA.blit(fundo_game_over, (0, 0))
 
-        texto_game_over = fonte.render("GAME OVER", True, (255, 0, 0))
+        texto_game_over = fonte.render("GAME OVER", True, (255, 255, 255))
         TELA.blit(
             texto_game_over,
             (LARGURA // 2 - texto_game_over.get_width() // 2,
