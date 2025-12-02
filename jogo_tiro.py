@@ -48,6 +48,28 @@ sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
 
 fonte = pygame.font.SysFont(None, 36)
 
+# classe botao
+class Botao:
+    def __init__(self, texto, x, y, largura, altura, cor_normal, cor_hover, fonte):
+        self.texto = texto
+        self.rect = pygame.Rect(x, y, largura, altura)
+        self.cor_normal = cor_normal
+        self.cor_hover = cor_hover
+        self.fonte = fonte
+
+    def desenhar(self, tela, mouse_pos):
+        cor = self.cor_hover if self.rect.collidepoint(mouse_pos) else self.cor_normal
+        pygame.draw.rect(tela, cor, self.rect, border_radius=10)
+        texto_render = self.fonte.render(self.texto, True, (255, 255, 255))
+        tela.blit(
+            texto_render,
+            (self.rect.x + (self.rect.width - texto_render.get_width()) // 2,
+             self.rect.y + (self.rect.height - texto_render.get_height()) // 2)
+        )
+
+    def clicado(self, mouse_pos):
+        return self.rect.collidepoint(mouse_pos)
+
 # carregando frames dos robôs e do personagem principal
 numero_frames_entidade = 6
 animacao_player = []
@@ -278,36 +300,52 @@ def desenhar_hud(tela, jogador_vida, pontos):
     texto_backup = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
     tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
 
+# tela game over
 def tela_game_over():
+    largura_botao = 200
+    altura_botao = 60
+    espaco = 40  
+
+    total_largura = largura_botao * 2 + espaco
+    x_inicial = LARGURA // 2 - total_largura // 2
+    y_botoes = ALTURA // 2
+
+    botao_reiniciar = Botao("Reiniciar", x_inicial, y_botoes,
+                            largura_botao, altura_botao,
+                            (40, 40, 180), (70, 70, 250), fonte)
+    botao_sair = Botao("Sair", x_inicial + largura_botao + espaco, y_botoes,
+                       largura_botao, altura_botao,
+                       (180, 40, 40), (250, 70, 70), fonte)
+
     game_over = True
     while game_over:
+        mouse_pos = pygame.mouse.get_pos()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = False
                 pygame.quit()
                 return "sair"
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # R para reiniciar
-                    game_over = False
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if botao_reiniciar.clicado(mouse_pos):
                     return "reiniciar"
-                if event.key == pygame.K_ESCAPE:  # ESC para sair
-                    game_over = False
+                if botao_sair.clicado(mouse_pos):
                     pygame.quit()
                     return "sair"
 
-        # fundo da tela de game over
         TELA.blit(fundo_game_over, (0, 0))
 
         texto_game_over = fonte.render("GAME OVER", True, (255, 0, 0))
-        texto_restart = fonte.render("Pressione R para reiniciar", True, (255, 255, 255))
-        texto_sair = fonte.render("ESC para sair", True, (255, 255, 255))
+        TELA.blit(
+            texto_game_over,
+            (LARGURA // 2 - texto_game_over.get_width() // 2,
+             ALTURA // 2 - 100)
+        )
 
-        TELA.blit(texto_game_over, (LARGURA // 2 - texto_game_over.get_width() // 2, ALTURA // 2 - 60))
-        TELA.blit(texto_restart, (LARGURA // 2 - texto_restart.get_width() // 2, ALTURA // 2))
-        TELA.blit(texto_sair, (LARGURA // 2 - texto_sair.get_width() // 2, ALTURA // 2 + 40))
+        botao_reiniciar.desenhar(TELA, mouse_pos)
+        botao_sair.desenhar(TELA, mouse_pos)
 
         pygame.display.flip()
-        clock.tick(15)
+        clock.tick(30)
 
 def resetar_jogo():
     global todos_sprites, inimigos, tiros, jogador, pontos, spawn_timer
@@ -391,7 +429,7 @@ while rodando:
             resultado = tela_game_over()
             if resultado == "reiniciar":
                 resetar_jogo()
-            else: 
+            else:
                 rodando = False
 
     # atualizar
