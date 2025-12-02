@@ -2,7 +2,6 @@ import pygame
 import random
 
 pygame.init()
-pygame.mixer.init() 
 
 LARGURA = 800
 ALTURA = 600
@@ -12,33 +11,32 @@ pygame.display.set_caption("Robot Defense - Template")
 FPS = 60
 clock = pygame.time.Clock()
 
+# fundo game over
+fundo_game_over = pygame.image.load("sprites/fundo/fundo.png").convert()
+fundo_game_over = pygame.transform.scale(fundo_game_over, (LARGURA, ALTURA))
+
+
 # carregando sprite de morte dos robôs
 animacao_morte = []
-numero_de_frames_morte = 8 
+numero_de_frames_morte = 8
 som_explosao = pygame.mixer.Sound('sons/explosao/som_explosao.wav')
-som_explosao.set_volume(20.0)
+som_explosao.set_volume(0.3)
 
 for i in range(1, numero_de_frames_morte + 1):
     img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (100, 100)) 
+    img = pygame.transform.scale(img, (100, 100))
     animacao_morte.append(img)
-    
 
 # carregando sprite do tiro
 animacao_tiro = []
 numero_de_frames_tiro = 4
 som_tiro = pygame.mixer.Sound('sons/tiro/som_tiro.wav')
-som_tiro.set_volume(4.0)
+som_tiro.set_volume(0.2)
 
 for i in range(1, numero_de_frames_tiro + 1):
     img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (32, 32)) 
+    img = pygame.transform.scale(img, (32, 32))
     animacao_tiro.append(img)
-
-# carregando sprite do fundo sonoro
-pygame.mixer.music.load('sons/fundo/musica_fundo.wav.wav')
-pygame.mixer.music.set_volume(200.0)
-pygame.mixer.music.play(-1)
 
 # carregando os sprites do coração e dos pontos
 maximo_vida = 5
@@ -48,9 +46,8 @@ sprite_coracao = pygame.transform.scale(sprite_coracao, (40, 40))
 
 sprite_coracao_vazio = pygame.image.load('sprites/coracao/coracao_preto.png').convert_alpha()
 sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
-    
-fonte = pygame.font.SysFont(None, 36)
 
+fonte = pygame.font.SysFont(None, 36)
 
 # carregando frames dos robôs e do personagem principal
 numero_frames_entidade = 6
@@ -72,7 +69,6 @@ class Entidade(pygame.sprite.Sprite):
     def mover(self, dx, dy):
         self.rect.x += dx
         self.rect.y += dy
-
 
 # JOGADOR
 class Jogador(Entidade):
@@ -97,22 +93,21 @@ class Jogador(Entidade):
         self.rect.x = max(0, min(self.rect.x, LARGURA - 40))
         self.rect.y = max(0, min(self.rect.y, ALTURA - 40))
 
-
 # TIRO (DO JOGADOR)
 class Tiro(Entidade):
     def __init__(self, x, y, animacao_frames):
         super().__init__(x, y, 10)
-        self.image = animacao_tiro[0]  
+        self.image = animacao_tiro[0]
         self.frames = animacao_frames
 
         if not self.frames:
-            self.image = pygame.Surface((32, 32)) 
-            self.image.fill((255, 255, 0)) 
+            self.image = pygame.Surface((32, 32))
+            self.image.fill((255, 255, 0))
         else:
             self.frame_atual = 0
             self.image = self.frames[self.frame_atual]
             self.ultima_atualizacao = pygame.time.get_ticks()
-            self.velocidade_animacao = 100 
+            self.velocidade_animacao = 100
         self.rect = self.image.get_rect(center=(x, y))
 
     def update(self):
@@ -129,7 +124,6 @@ class Tiro(Entidade):
         if self.rect.y < 0:
             self.kill()
 
-
 # ROBO BASE
 class Robo(Entidade):
     def __init__(self, x, y, velocidade):
@@ -138,7 +132,6 @@ class Robo(Entidade):
 
     def atualizar_posicao(self):
         raise NotImplementedError
-
 
 # ROBO EXEMPLO — ZigueZague
 class RoboZigueZague(Robo):
@@ -162,7 +155,7 @@ class RoboZigueZague(Robo):
 class RoboLento(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade=2)
-        self.image.fill((0, 0, 255))  
+        self.image.fill((0, 0, 255))
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
@@ -176,7 +169,7 @@ class RoboLento(Robo):
 class RoboRapido(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade=6)
-        self.image.fill((255, 165, 0)) 
+        self.image.fill((255, 165, 0))
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
@@ -190,9 +183,9 @@ class RoboRapido(Robo):
 class RoboSaltador(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade=3)
-        self.image.fill((100, 255, 100))  # roxo
+        self.image.fill((100, 255, 100))  # roxo?
         self.contador_salto = 0
-        self.salto_intervalo = random.randint(40, 90)  # tempo entre saltos
+        self.salto_intervalo = random.randint(40, 90)
         self.forca_salto = random.randint(8, 14)
 
     def atualizar_posicao(self):
@@ -231,7 +224,7 @@ class RoboCacador(Robo):
         if self.rect.y > ALTURA:
             self.kill()
 
-# classe para o fundo do jogo 
+# classe para o fundo do jogo
 class Fundo(pygame.sprite.Sprite):
     def __init__(self, imagem_path):
         super().__init__()
@@ -245,14 +238,14 @@ class Explosao(pygame.sprite.Sprite):
     def __init__(self, centro_x, centro_y, animacao_frames):
         super().__init__()
         self.frames = animacao_frames
-        
+
         self.frame_atual = 0
         self.ultima_atualizacao = pygame.time.get_ticks()
-        self.velocidade_animacao = 50 
-        
+        self.velocidade_animacao = 50
+
         self.image = self.frames[self.frame_atual]
         self.rect = self.image.get_rect(center=(centro_x, centro_y))
-        
+
     def update(self):
         agora = pygame.time.get_ticks()
 
@@ -262,10 +255,10 @@ class Explosao(pygame.sprite.Sprite):
 
             if self.frame_atual < len(self.frames):
                 self.image = self.frames[self.frame_atual]
-                centro = self.rect.center 
+                centro = self.rect.center
                 self.rect = self.image.get_rect(center=centro)
             else:
-                self.kill() 
+                self.kill()
 
 # carregando imagens do HUD
 def desenhar_hud(tela, jogador_vida, pontos):
@@ -278,7 +271,7 @@ def desenhar_hud(tela, jogador_vida, pontos):
                 sprite_a_desenhar = sprite_coracao
             else:
                 sprite_a_desenhar = sprite_coracao_vazio
-            tela.blit(sprite_a_desenhar, (x_inicial + i * 45, y_pos))  
+            tela.blit(sprite_a_desenhar, (x_inicial + i * 45, y_pos))
     else:
         texto_vida = fonte.render(f"Vida: {jogador_vida}", True, (255, 255, 255))
         tela.blit(texto_vida, (10, 10))
@@ -286,39 +279,76 @@ def desenhar_hud(tela, jogador_vida, pontos):
     texto_backup = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
     tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
 
+def tela_game_over():
+    game_over = True
+    while game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_over = False
+                pygame.quit()
+                return "sair"
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  # R para reiniciar
+                    game_over = False
+                    return "reiniciar"
+                if event.key == pygame.K_ESCAPE:  # ESC para sair
+                    game_over = False
+                    pygame.quit()
+                    return "sair"
+
+        # fundo da tela de game over
+        TELA.blit(fundo_game_over, (0, 0))
+
+        texto_game_over = fonte.render("GAME OVER", True, (255, 0, 0))
+        texto_restart = fonte.render("Pressione R para reiniciar", True, (255, 255, 255))
+        texto_sair = fonte.render("ESC para sair", True, (255, 255, 255))
+
+        TELA.blit(texto_game_over, (LARGURA // 2 - texto_game_over.get_width() // 2, ALTURA // 2 - 60))
+        TELA.blit(texto_restart, (LARGURA // 2 - texto_restart.get_width() // 2, ALTURA // 2))
+        TELA.blit(texto_sair, (LARGURA // 2 - texto_sair.get_width() // 2, ALTURA // 2 + 40))
+
+        pygame.display.flip()
+        clock.tick(15)
+
+def resetar_jogo():
+    global todos_sprites, inimigos, tiros, jogador, pontos, spawn_timer
+
+    todos_sprites.empty()
+    inimigos.empty()
+    tiros.empty()
+
+    # recria fundo
+    fundo_sprite = Fundo('sprites/fundo/fundo.png')
+    todos_sprites.add(fundo_sprite)
+
+    # recria jogador
+    jogador = Jogador(LARGURA // 2, ALTURA - 60)
+    todos_sprites.add(jogador)
+
+    pontos = 0
+    spawn_timer = 0
 
 todos_sprites = pygame.sprite.Group()
-
-# criando o fundo
-fundo_sprite = Fundo('sprites/fundo/fundo.png') 
-todos_sprites.add(fundo_sprite)
-
 inimigos = pygame.sprite.Group()
 tiros = pygame.sprite.Group()
 
-jogador = Jogador(LARGURA // 2, ALTURA - 60)
-todos_sprites.add(jogador)
-
-pontos = 0
-spawn_timer = 0
+resetar_jogo()
 
 rodando = True
 while rodando:
     clock.tick(FPS)
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             rodando = False
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                tiro = Tiro(jogador.rect.centerx, jogador.rect.y, animacao_tiro) 
+                tiro = Tiro(jogador.rect.centerx, jogador.rect.y, animacao_tiro)
                 todos_sprites.add(tiro)
                 tiros.add(tiro)
                 if som_tiro:
                     som_tiro.play()
 
-    # timer de entrada dos inimigos
     spawn_timer += 1
     if spawn_timer > 40:
         tipo = random.choice(["zigue", "lento", "rapido", "saltador", "cacador"])
@@ -335,7 +365,6 @@ while rodando:
         elif tipo == "cacador":
             robo = RoboCacador(x_spawn, -40, jogador)
 
-
         todos_sprites.add(robo)
         inimigos.add(robo)
         spawn_timer = 0
@@ -346,13 +375,13 @@ while rodando:
     # acionando a animação de explosão
     for robo_destruido in colisao.keys():
         pontos += len(colisao)
-        
+
         centro_x = robo_destruido.rect.centerx
         centro_y = robo_destruido.rect.centery
-        
-        if animacao_morte: 
+
+        if animacao_morte:
             explosao = Explosao(centro_x, centro_y, animacao_morte)
-            todos_sprites.add(explosao) 
+            todos_sprites.add(explosao)
             if som_explosao:
                 som_explosao.play()
 
@@ -360,16 +389,20 @@ while rodando:
     if pygame.sprite.spritecollide(jogador, inimigos, True):
         jogador.vida -= 1
         if jogador.vida <= 0:
-            print("GAME OVER!")
-            rodando = False
+            resultado = tela_game_over()
+            if resultado == "reiniciar":
+                resetar_jogo()
+            else: 
+                rodando = False
 
     # atualizar
     todos_sprites.update()
 
     # desenhar
-    TELA.fill((20, 20, 20))
+    TELA.blit(fundo_game_over, (0, 0))
     todos_sprites.draw(TELA)
     desenhar_hud(TELA, jogador.vida, pontos)
 
     pygame.display.flip()
+
 pygame.quit()
