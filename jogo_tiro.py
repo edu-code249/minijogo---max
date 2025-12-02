@@ -15,7 +15,6 @@ clock = pygame.time.Clock()
 fundo_game_over = pygame.image.load("sprites/fundo/fundo.png").convert()
 fundo_game_over = pygame.transform.scale(fundo_game_over, (LARGURA, ALTURA))
 
-
 # carregando sprite de morte dos robôs
 animacao_morte = []
 numero_de_frames_morte = 8
