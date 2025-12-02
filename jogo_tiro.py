@@ -2,6 +2,7 @@ import pygame
 import random
 
 pygame.init()
+pygame.mixer.init() 
 
 LARGURA = 800
 ALTURA = 600
@@ -15,7 +16,7 @@ clock = pygame.time.Clock()
 animacao_morte = []
 numero_de_frames_morte = 8 
 som_explosao = pygame.mixer.Sound('sons/explosao/som_explosao.wav')
-som_explosao.set_volume(0.3)
+som_explosao.set_volume(10.0)
 
 for i in range(1, numero_de_frames_morte + 1):
     img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
@@ -27,12 +28,16 @@ for i in range(1, numero_de_frames_morte + 1):
 animacao_tiro = []
 numero_de_frames_tiro = 4
 som_tiro = pygame.mixer.Sound('sons/tiro/som_tiro.wav')
-som_tiro.set_volume(0.2)
+som_tiro.set_volume(5.0)
 
 for i in range(1, numero_de_frames_tiro + 1):
     img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
     img = pygame.transform.scale(img, (32, 32)) 
     animacao_tiro.append(img)
+
+pygame.mixer.music.load('sons/fundo/musica_fundo.wav.wav')
+pygame.mixer.music.set_volume(100.0)
+pygame.mixer.music.play(-1)
 
 # carregando os sprites do coração e dos pontos
 maximo_vida = 5
