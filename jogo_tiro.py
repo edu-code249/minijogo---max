@@ -12,8 +12,16 @@ FPS = 60
 clock = pygame.time.Clock()
 
 # fundo game over
-fundo_game_over = pygame.image.load("sprites/fundo/fundo.png").convert()
+fundo_game_over = pygame.image.load("sprites/fundo/fundo_game_over.png").convert()
 fundo_game_over = pygame.transform.scale(fundo_game_over, (LARGURA, ALTURA))
+som_game_over = pygame.mixer.Sound('sons/game_over/som_game_over.wav')
+som_game_over.set_volume(0.5)
+
+som_restart = pygame.mixer.Sound('sons/game_over/som_restart.wav')
+som_restart.set_volume(0.1)
+
+som_dano = pygame.mixer.Sound('sons/game_over/som_dano.wav')
+som_dano.set_volume(0.2)
 
 # carregando sprite de morte dos robôs
 animacao_morte = []
@@ -71,20 +79,30 @@ class Botao:
         return self.rect.collidepoint(mouse_pos)
 
 # carregando frames dos robôs e do personagem principal
-numero_frames_entidade = 6
+numero_frames_entidade = 4
 animacao_player = []
+
 animacao_robo_lento = []
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/robo_lento/robo_l-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (50, 50)) 
+    animacao_robo_lento.append(img)
+
 animacao_robo_rapido = []
+
 animacao_robo_zigue_zag = []
+
 animacao_saltador = []
+
 animacao_cacador = []
+
 
 # CLASSE BASE
 class Entidade(pygame.sprite.Sprite):
     def __init__(self, x, y, velocidade):
         super().__init__()
         self.velocidade = velocidade
-        self.image = pygame.Surface((40, 40))
+        self.image = pygame.Surface((50, 50))
         self.rect = self.image.get_rect(center=(x, y))
 
     def mover(self, dx, dy):
@@ -147,17 +165,45 @@ class Tiro(Entidade):
 
 # ROBO BASE
 class Robo(Entidade):
-    def __init__(self, x, y, velocidade):
+    def __init__(self, x, y, velocidade, animacao_frames):
         super().__init__(x, y, velocidade)
-        self.image.fill((255, 0, 0))  # vermelho
+
+        self.frames = animacao_frames
+        self.frame_atual = 0
+        self.ultima_atualizacao = pygame.time.get_ticks()
+        self.velocidade_animacao = 150
+
+        if self.frames:
+            self.image = self.frames[self.frame_atual]
+            self.rect = self.image.get_rect(center=(x, y)) 
+        else:
+            self.image.fill((255, 0, 0))
+
+    def animar(self):
+        if self.frames:
+            agora = pygame.time.get_ticks()
+            if agora - self.ultima_atualizacao > self.velocidade_animacao:
+                self.ultima_atualizacao = agora
+                self.frame_atual += 1
+                
+                if self.frame_atual >= len(self.frames):
+                    self.frame_atual = 0
+                
+                centro = self.rect.center
+                self.image = self.frames[self.frame_atual]
+                self.rect = self.image.get_rect(center=centro)
 
     def atualizar_posicao(self):
         raise NotImplementedError
 
+    def update(self):
+        self.animar()
+        self.atualizar_posicao()
+
 # ROBO EXEMPLO — ZigueZague
 class RoboZigueZague(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=3)
+        super().__init__(x, y, velocidade = 3, animacao_frames = animacao_robo_zigue_zag)
         self.direcao = 1
 
     def atualizar_posicao(self):
@@ -175,13 +221,13 @@ class RoboZigueZague(Robo):
 # robô lento
 class RoboLento(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=2)
-        self.image.fill((0, 0, 255))
+        super().__init__(x, y, velocidade = 2, animacao_frames = animacao_robo_lento)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
 
     def update(self):
+        self.animar()
         self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
@@ -189,7 +235,7 @@ class RoboLento(Robo):
 # robô rapido
 class RoboRapido(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=6)
+        super().__init__(x, y, velocidade = 6, animacao_frames = animacao_robo_rapido)
         self.image.fill((255, 165, 0))
 
     def atualizar_posicao(self):
@@ -203,8 +249,8 @@ class RoboRapido(Robo):
 # robô saltador
 class RoboSaltador(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=3)
-        self.image.fill((100, 255, 100))  # roxo?
+        super().__init__(x, y, velocidade = 3, animacao_frames = animacao_saltador)
+        self.image.fill((100, 255, 100)) 
         self.contador_salto = 0
         self.salto_intervalo = random.randint(40, 90)
         self.forca_salto = random.randint(8, 14)
@@ -226,7 +272,7 @@ class RoboSaltador(Robo):
 # robô caçador
 class RoboCacador(Robo):
     def __init__(self, x, y, jogador):
-        super().__init__(x, y, velocidade=4)
+        super().__init__(x, y, velocidade = 4, animacao_frames = animacao_cacador)
         self.jogador = jogador
         self.image.fill((255, 0, 255))  # rosa
 
@@ -425,8 +471,11 @@ while rodando:
     # colisão robô x jogador
     if pygame.sprite.spritecollide(jogador, inimigos, True):
         jogador.vida -= 1
+        som_dano.play()
         if jogador.vida <= 0:
+            som_game_over.play()
             resultado = tela_game_over()
+            som_restart.play()
             if resultado == "reiniciar":
                 resetar_jogo()
             else:
