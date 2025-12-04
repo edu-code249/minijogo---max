@@ -12,13 +12,17 @@ FPS = 60
 clock = pygame.time.Clock()
 
 # fundo game over
+pygame.mixer.music.load('sons/fundo/musica_fundo.wav')
+pygame.mixer.music.set_volume(0.2) 
+pygame.mixer.music.play(-1)
+
 fundo_game_over = pygame.image.load("sprites/fundo/fundo_game_over.png").convert()
 fundo_game_over = pygame.transform.scale(fundo_game_over, (LARGURA, ALTURA))
 som_game_over = pygame.mixer.Sound('sons/game_over/som_game_over.wav')
 som_game_over.set_volume(0.5)
 
 som_restart = pygame.mixer.Sound('sons/game_over/som_restart.wav')
-som_restart.set_volume(0.1)
+som_restart.set_volume(0.3)
 
 som_dano = pygame.mixer.Sound('sons/game_over/som_dano.wav')
 som_dano.set_volume(0.2)
@@ -85,17 +89,32 @@ animacao_player = []
 animacao_robo_lento = []
 for i in range(1, numero_frames_entidade + 1):
     img = pygame.image.load(f'sprites/robo_lento/robo_l-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (50, 50)) 
+    img = pygame.transform.scale(img, (50, 60)) 
     animacao_robo_lento.append(img)
 
 animacao_robo_rapido = []
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/robo_rapido/robo_r-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (50, 60)) 
+    animacao_robo_rapido.append(img)
 
 animacao_robo_zigue_zag = []
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/robo_zigue_zag/robo_z-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (50, 60)) 
+    animacao_robo_zigue_zag.append(img)
 
 animacao_saltador = []
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/robo_saltador/robo_s-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (50, 60)) 
+    animacao_saltador.append(img)
 
 animacao_cacador = []
-
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/robo_cacador/robo_c-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (50, 60)) 
+    animacao_cacador.append(img)
 
 # CLASSE BASE
 class Entidade(pygame.sprite.Sprite):
@@ -214,6 +233,7 @@ class RoboZigueZague(Robo):
             self.direcao *= -1
 
     def update(self):
+        self.animar()
         self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
@@ -236,12 +256,12 @@ class RoboLento(Robo):
 class RoboRapido(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade = 6, animacao_frames = animacao_robo_rapido)
-        self.image.fill((255, 165, 0))
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
 
     def update(self):
+        self.animar()
         self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
@@ -250,7 +270,6 @@ class RoboRapido(Robo):
 class RoboSaltador(Robo):
     def __init__(self, x, y):
         super().__init__(x, y, velocidade = 3, animacao_frames = animacao_saltador)
-        self.image.fill((100, 255, 100)) 
         self.contador_salto = 0
         self.salto_intervalo = random.randint(40, 90)
         self.forca_salto = random.randint(8, 14)
@@ -265,6 +284,7 @@ class RoboSaltador(Robo):
             self.contador_salto = 0
 
     def update(self):
+        self.animar()
         self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
@@ -274,7 +294,6 @@ class RoboCacador(Robo):
     def __init__(self, x, y, jogador):
         super().__init__(x, y, velocidade = 4, animacao_frames = animacao_cacador)
         self.jogador = jogador
-        self.image.fill((255, 0, 255))  # rosa
 
     def atualizar_posicao(self):
         # seguir o jogador horizontalmente
@@ -287,6 +306,7 @@ class RoboCacador(Robo):
         self.rect.y += self.velocidade
 
     def update(self):
+        self.animar()
         self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
