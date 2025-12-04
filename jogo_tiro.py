@@ -255,7 +255,7 @@ class RoboLento(Robo):
 # robô rapido
 class RoboRapido(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade = 6, animacao_frames = animacao_robo_rapido)
+        super().__init__(x, y, velocidade = 8, animacao_frames = animacao_robo_rapido)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
@@ -512,3 +512,4 @@ while rodando:
     pygame.display.flip()
 
 pygame.quit()
+
