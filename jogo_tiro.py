@@ -13,7 +13,7 @@ clock = pygame.time.Clock()
 
 # fundo game over
 pygame.mixer.music.load('sons/fundo/musica_fundo.wav')
-pygame.mixer.music.set_volume(0.2) 
+pygame.mixer.music.set_volume(0.2)
 pygame.mixer.music.play(-1)
 
 fundo_game_over = pygame.image.load("sprites/fundo/fundo_game_over.png").convert()
@@ -49,7 +49,7 @@ for i in range(1, numero_de_frames_tiro + 1):
     img = pygame.transform.scale(img, (32, 32))
     animacao_tiro.append(img)
 
-# carregando os sprites do coração e dos pontos
+# carrega os sprites do coração e dos pontos
 maximo_vida = 5
 
 sprite_coracao = pygame.image.load('sprites/coracao/coracao_azul.png').convert_alpha()
@@ -59,6 +59,21 @@ sprite_coracao_vazio = pygame.image.load('sprites/coracao/coracao_preto.png').co
 sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
 
 fonte = pygame.font.SysFont(None, 36)
+
+#Easter Egg
+som_joaildo = None
+try:
+    som_joaildo = pygame.mixer.Sound('sons/easteregg/play_joaildo.wav')
+    som_joaildo.set_volume(0.7)
+except Exception:
+    som_joaildo = None
+
+buff_ativo = False
+buff_duracao = 10000  # duração em ms (10000ms = 10s)
+buff_inicio = 0
+
+cacadores_eliminados = 0
+CACADORES_PARA_ATIVAR = 15  # número de caçadores a eliminar para ativar o Easter Egg
 
 # classe botao
 class Botao:
@@ -89,31 +104,31 @@ animacao_player = []
 animacao_robo_lento = []
 for i in range(1, numero_frames_entidade + 1):
     img = pygame.image.load(f'sprites/robo_lento/robo_l-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (50, 60)) 
+    img = pygame.transform.scale(img, (50, 60))
     animacao_robo_lento.append(img)
 
 animacao_robo_rapido = []
 for i in range(1, numero_frames_entidade + 1):
     img = pygame.image.load(f'sprites/robo_rapido/robo_r-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (50, 60)) 
+    img = pygame.transform.scale(img, (50, 60))
     animacao_robo_rapido.append(img)
 
 animacao_robo_zigue_zag = []
 for i in range(1, numero_frames_entidade + 1):
     img = pygame.image.load(f'sprites/robo_zigue_zag/robo_z-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (50, 60)) 
+    img = pygame.transform.scale(img, (50, 60))
     animacao_robo_zigue_zag.append(img)
 
 animacao_saltador = []
 for i in range(1, numero_frames_entidade + 1):
     img = pygame.image.load(f'sprites/robo_saltador/robo_s-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (50, 60)) 
+    img = pygame.transform.scale(img, (50, 60))
     animacao_saltador.append(img)
 
 animacao_cacador = []
 for i in range(1, numero_frames_entidade + 1):
     img = pygame.image.load(f'sprites/robo_cacador/robo_c-00{i:02d}.png').convert_alpha()
-    img = pygame.transform.scale(img, (50, 60)) 
+    img = pygame.transform.scale(img, (50, 60))
     animacao_cacador.append(img)
 
 # CLASSE BASE
@@ -121,7 +136,7 @@ class Entidade(pygame.sprite.Sprite):
     def __init__(self, x, y, velocidade):
         super().__init__()
         self.velocidade = velocidade
-        self.image = pygame.Surface((50, 50))
+        self.image = pygame.Surface((50, 50), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=(x, y))
 
     def mover(self, dx, dy):
@@ -131,7 +146,10 @@ class Entidade(pygame.sprite.Sprite):
 # JOGADOR
 class Jogador(Entidade):
     def __init__(self, x, y):
-        super().__init__(x, y, 5)
+        # define velocidade base via velocidade_base; seta self.velocidade a partir disso
+        self.velocidade_base = 5
+        self.velocidade_buff = 10
+        super().__init__(x, y, self.velocidade_base)
         self.image.fill((0, 255, 0))  # verde
         self.vida = 5
 
@@ -155,7 +173,6 @@ class Jogador(Entidade):
 class Tiro(Entidade):
     def __init__(self, x, y, animacao_frames):
         super().__init__(x, y, 10)
-        self.image = animacao_tiro[0]
         self.frames = animacao_frames
 
         if not self.frames:
@@ -194,7 +211,7 @@ class Robo(Entidade):
 
         if self.frames:
             self.image = self.frames[self.frame_atual]
-            self.rect = self.image.get_rect(center=(x, y)) 
+            self.rect = self.image.get_rect(center=(x, y))
         else:
             self.image.fill((255, 0, 0))
 
@@ -204,10 +221,10 @@ class Robo(Entidade):
             if agora - self.ultima_atualizacao > self.velocidade_animacao:
                 self.ultima_atualizacao = agora
                 self.frame_atual += 1
-                
+
                 if self.frame_atual >= len(self.frames):
                     self.frame_atual = 0
-                
+
                 centro = self.rect.center
                 self.image = self.frames[self.frame_atual]
                 self.rect = self.image.get_rect(center=centro)
@@ -222,7 +239,7 @@ class Robo(Entidade):
 # ROBO EXEMPLO — ZigueZague
 class RoboZigueZague(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade = 3, animacao_frames = animacao_robo_zigue_zag)
+        super().__init__(x, y, velocidade=3, animacao_frames=animacao_robo_zigue_zag)
         self.direcao = 1
 
     def atualizar_posicao(self):
@@ -241,7 +258,7 @@ class RoboZigueZague(Robo):
 # robô lento
 class RoboLento(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade = 2, animacao_frames = animacao_robo_lento)
+        super().__init__(x, y, velocidade=2, animacao_frames=animacao_robo_lento)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
@@ -255,7 +272,7 @@ class RoboLento(Robo):
 # robô rapido
 class RoboRapido(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade = 8, animacao_frames = animacao_robo_rapido)
+        super().__init__(x, y, velocidade=8, animacao_frames=animacao_robo_rapido)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
@@ -269,7 +286,7 @@ class RoboRapido(Robo):
 # robô saltador
 class RoboSaltador(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade = 3, animacao_frames = animacao_saltador)
+        super().__init__(x, y, velocidade=3, animacao_frames=animacao_saltador)
         self.contador_salto = 0
         self.salto_intervalo = random.randint(40, 90)
         self.forca_salto = random.randint(8, 14)
@@ -292,7 +309,7 @@ class RoboSaltador(Robo):
 # robô caçador
 class RoboCacador(Robo):
     def __init__(self, x, y, jogador):
-        super().__init__(x, y, velocidade = 4, animacao_frames = animacao_cacador)
+        super().__init__(x, y, velocidade=6, animacao_frames=animacao_cacador)
         self.jogador = jogador
 
     def atualizar_posicao(self):
@@ -348,7 +365,8 @@ class Explosao(pygame.sprite.Sprite):
                 self.kill()
 
 # carregando imagens do HUD
-def desenhar_hud(tela, jogador_vida, pontos):
+def desenhar_hud(tela, jogador_vida, pontos, buff_ativo_local, cacadores_local):
+    # coracao
     if sprite_coracao and sprite_coracao_vazio:
         x_inicial = 10
         y_pos = 10
@@ -366,11 +384,15 @@ def desenhar_hud(tela, jogador_vida, pontos):
     texto_backup = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
     tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
 
+    # desenho do status do buff e contador de cacadores
+    status_texto = "BUFF ATIVO!" if buff_ativo_local else f"Cacadores: {cacadores_local}/{CACADORES_PARA_ATIVAR}"
+    
+
 # tela game over
 def tela_game_over():
     largura_botao = 200
     altura_botao = 60
-    espaco = 40  
+    espaco = 40
 
     total_largura = largura_botao * 2 + espaco
     x_inicial = LARGURA // 2 - total_largura // 2
@@ -415,6 +437,7 @@ def tela_game_over():
 
 def resetar_jogo():
     global todos_sprites, inimigos, tiros, jogador, pontos, spawn_timer
+    global buff_ativo, buff_inicio, cacadores_eliminados
 
     todos_sprites.empty()
     inimigos.empty()
@@ -430,6 +453,12 @@ def resetar_jogo():
 
     pontos = 0
     spawn_timer = 0
+
+    # reset do estado do buff / contador ao reiniciar o jogo
+    buff_ativo = False
+    buff_inicio = 0
+    cacadores_eliminados = 0
+    jogador.velocidade = jogador.velocidade_base
 
 todos_sprites = pygame.sprite.Group()
 inimigos = pygame.sprite.Group()
@@ -475,10 +504,26 @@ while rodando:
     # colisão tiro x robô
     colisao = pygame.sprite.groupcollide(inimigos, tiros, True, True)
 
-    # acionando a animação de explosão
-    for robo_destruido in colisao.keys():
-        pontos += len(colisao)
+    # processa cada robô destruído individualmente
+    for robo_destruido, lista_tiros in colisao.items():
+        # ganha pontos: 1 por robô (ou 2 se buff ativo)
+        pontos += 2 if buff_ativo else 1
 
+        # Verifica se é um RoboCacador e conta somente se o buff não está ativo
+        if isinstance(robo_destruido, RoboCacador):
+            if not buff_ativo:
+                cacadores_eliminados += 1
+                # ativa o buff quando atingir o limite
+                if cacadores_eliminados >= CACADORES_PARA_ATIVAR:
+                    buff_ativo = True
+                    buff_inicio = pygame.time.get_ticks()
+                    # aplica velocidade buff ao jogador
+                    jogador.velocidade = jogador.velocidade_buff
+                    # toca o som de Joaildo
+                    if som_joaildo:
+                        som_joaildo.play()
+                   
+        # animação de explosão
         centro_x = robo_destruido.rect.centerx
         centro_y = robo_destruido.rect.centery
 
@@ -501,15 +546,23 @@ while rodando:
             else:
                 rodando = False
 
+    # controle da duração do buff (deve estar depois de eventos que podem ativar o buff)
+    if buff_ativo:
+        if pygame.time.get_ticks() - buff_inicio > buff_duracao:
+            buff_ativo = False
+            # voltar velocidade ao normal
+            jogador.velocidade = jogador.velocidade_base
+            # zerar o contador para permitir reativação após matar novos cacadores
+            cacadores_eliminados = 0
+
     # atualizar
     todos_sprites.update()
 
     # desenhar
     TELA.blit(fundo_game_over, (0, 0))
     todos_sprites.draw(TELA)
-    desenhar_hud(TELA, jogador.vida, pontos)
+    desenhar_hud(TELA, jogador.vida, pontos, buff_ativo, cacadores_eliminados)
 
     pygame.display.flip()
 
 pygame.quit()
-
