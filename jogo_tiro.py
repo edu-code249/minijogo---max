@@ -49,7 +49,7 @@ for i in range(1, numero_de_frames_tiro + 1):
     img = pygame.transform.scale(img, (32, 32))
     animacao_tiro.append(img)
 
-# carrega os sprites do coração e dos pontos
+# sprites HUD
 maximo_vida = 5
 
 sprite_coracao = pygame.image.load('sprites/coracao/coracao_azul.png').convert_alpha()
@@ -60,22 +60,21 @@ sprite_coracao_vazio = pygame.transform.scale(sprite_coracao_vazio, (40, 40))
 
 fonte = pygame.font.SysFont(None, 36)
 
-#Easter Egg
 som_joaildo = None
 try:
     som_joaildo = pygame.mixer.Sound('sons/easteregg/play_joaildo.wav')
     som_joaildo.set_volume(0.7)
-except Exception:
-    som_joaildo = None
+except:
+    pass
 
 buff_ativo = False
-buff_duracao = 10000  # duração em ms (10000ms = 10s)
+buff_duracao = 10000
 buff_inicio = 0
 
 cacadores_eliminados = 0
-CACADORES_PARA_ATIVAR = 10  # número de caçadores a eliminar para ativar o Easter Egg
+CACADORES_PARA_ATIVAR = 10
 
-# classe botao
+# classe botão
 class Botao:
     def __init__(self, texto, x, y, largura, altura, cor_normal, cor_hover, fonte):
         self.texto = texto
@@ -97,8 +96,10 @@ class Botao:
     def clicado(self, mouse_pos):
         return self.rect.collidepoint(mouse_pos)
 
-# carregando frames dos robôs e do personagem principal
+
+# FRAMES ENTIDADES
 numero_frames_entidade = 4
+
 animacao_player = []
 
 animacao_robo_lento = []
@@ -131,7 +132,9 @@ for i in range(1, numero_frames_entidade + 1):
     img = pygame.transform.scale(img, (50, 60))
     animacao_cacador.append(img)
 
+
 # CLASSE BASE
+
 class Entidade(pygame.sprite.Sprite):
     def __init__(self, x, y, velocidade):
         super().__init__()
@@ -143,14 +146,16 @@ class Entidade(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+
+
 # JOGADOR
+
 class Jogador(Entidade):
     def __init__(self, x, y):
-        # define velocidade base via velocidade_base; seta self.velocidade a partir disso
         self.velocidade_base = 5
         self.velocidade_buff = 10
         super().__init__(x, y, self.velocidade_base)
-        self.image.fill((0, 255, 0))  # verde
+        self.image.fill((0, 255, 0))
         self.vida = 5
 
     def update(self):
@@ -165,11 +170,14 @@ class Jogador(Entidade):
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.mover(self.velocidade, 0)
 
-        # limites de tela
+        # limites da tela
         self.rect.x = max(0, min(self.rect.x, LARGURA - 40))
         self.rect.y = max(0, min(self.rect.y, ALTURA - 40))
 
-# TIRO (DO JOGADOR)
+
+
+# TIRO DO JOGADOR
+
 class Tiro(Entidade):
     def __init__(self, x, y, animacao_frames):
         super().__init__(x, y, 10)
@@ -187,23 +195,24 @@ class Tiro(Entidade):
 
     def update(self):
         self.rect.y -= self.velocidade
+        # animação
         if self.frames:
             agora = pygame.time.get_ticks()
             if agora - self.ultima_atualizacao > self.velocidade_animacao:
                 self.ultima_atualizacao = agora
-                self.frame_atual += 1
-                if self.frame_atual >= len(self.frames):
-                    self.frame_atual = 0
+                self.frame_atual = (self.frame_atual + 1) % len(self.frames)
                 self.image = self.frames[self.frame_atual]
 
         if self.rect.y < 0:
             self.kill()
 
-# ROBO BASE
+
+
+# ROBÔ BASE
+
 class Robo(Entidade):
     def __init__(self, x, y, velocidade, animacao_frames):
         super().__init__(x, y, velocidade)
-
         self.frames = animacao_frames
         self.frame_atual = 0
         self.ultima_atualizacao = pygame.time.get_ticks()
@@ -212,22 +221,15 @@ class Robo(Entidade):
         if self.frames:
             self.image = self.frames[self.frame_atual]
             self.rect = self.image.get_rect(center=(x, y))
-        else:
-            self.image.fill((255, 0, 0))
 
     def animar(self):
-        if self.frames:
-            agora = pygame.time.get_ticks()
-            if agora - self.ultima_atualizacao > self.velocidade_animacao:
-                self.ultima_atualizacao = agora
-                self.frame_atual += 1
-
-                if self.frame_atual >= len(self.frames):
-                    self.frame_atual = 0
-
-                centro = self.rect.center
-                self.image = self.frames[self.frame_atual]
-                self.rect = self.image.get_rect(center=centro)
+        agora = pygame.time.get_ticks()
+        if agora - self.ultima_atualizacao > self.velocidade_animacao:
+            self.ultima_atualizacao = agora
+            self.frame_atual = (self.frame_atual + 1) % len(self.frames)
+            centro = self.rect.center
+            self.image = self.frames[self.frame_atual]
+            self.rect = self.image.get_rect(center=centro)
 
     def atualizar_posicao(self):
         raise NotImplementedError
@@ -236,10 +238,13 @@ class Robo(Entidade):
         self.animar()
         self.atualizar_posicao()
 
-# ROBO EXEMPLO — ZigueZague
+
+
+# ROBÔS NORMAIS
+
 class RoboZigueZague(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=3, animacao_frames=animacao_robo_zigue_zag)
+        super().__init__(x, y, 3, animacao_robo_zigue_zag)
         self.direcao = 1
 
     def atualizar_posicao(self):
@@ -249,86 +254,128 @@ class RoboZigueZague(Robo):
         if self.rect.x <= 0 or self.rect.x >= LARGURA - 40:
             self.direcao *= -1
 
-    def update(self):
-        self.animar()
-        self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
 
-# robô lento
+
 class RoboLento(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=2, animacao_frames=animacao_robo_lento)
+        super().__init__(x, y, 2, animacao_robo_lento)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
-
-    def update(self):
-        self.animar()
-        self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
 
-# robô rapido
+
 class RoboRapido(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=8, animacao_frames=animacao_robo_rapido)
+        super().__init__(x, y, 8, animacao_robo_rapido)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
-
-    def update(self):
-        self.animar()
-        self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
 
-# robô saltador
+
 class RoboSaltador(Robo):
     def __init__(self, x, y):
-        super().__init__(x, y, velocidade=3, animacao_frames=animacao_saltador)
+        super().__init__(x, y, 3, animacao_saltador)
         self.contador_salto = 0
         self.salto_intervalo = random.randint(40, 90)
         self.forca_salto = random.randint(8, 14)
 
     def atualizar_posicao(self):
         self.rect.y += self.velocidade
-
-        # contador para decidir a hora de saltar
         self.contador_salto += 4
         if self.contador_salto >= self.salto_intervalo:
             self.rect.y += self.forca_salto
             self.contador_salto = 0
 
-    def update(self):
-        self.animar()
-        self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
 
-# robô caçador
+
 class RoboCacador(Robo):
     def __init__(self, x, y, jogador):
-        super().__init__(x, y, velocidade=6, animacao_frames=animacao_cacador)
+        super().__init__(x, y, 6, animacao_cacador)
         self.jogador = jogador
 
     def atualizar_posicao(self):
-        # seguir o jogador horizontalmente
         if self.jogador.rect.centerx < self.rect.centerx:
             self.rect.x -= 2
         elif self.jogador.rect.centerx > self.rect.centerx:
             self.rect.x += 2
 
-        # avança para baixo
         self.rect.y += self.velocidade
 
-    def update(self):
-        self.animar()
-        self.atualizar_posicao()
         if self.rect.y > ALTURA:
             self.kill()
 
-# classe para o fundo do jogo
+
+# ROBO CHEFÃO  (BOSS)
+
+class RoboChefao(Robo):
+    def __init__(self, x, y, jogador):
+        # usa o sprite do robo lento (ampliado)
+        super().__init__(x, y, velocidade=2, animacao_frames=animacao_robo_lento)
+        self.jogador = jogador
+        self.vida = 30
+        self.atirando_timer = 0
+
+        # deixa o boss grande
+        self.image = pygame.transform.scale(self.image, (150, 180))
+        self.rect = self.image.get_rect(center=(x, y))
+
+    def atualizar_posicao(self):
+        # segue lentamente o jogador
+        if self.jogador.rect.centerx < self.rect.centerx:
+            self.rect.x -= 1
+        elif self.jogador.rect.centerx > self.rect.centerx:
+            self.rect.x += 1
+
+        # desce e para numa altura fixa
+        self.rect.y += self.velocidade
+        if self.rect.y > 120:
+            self.rect.y = 120
+
+        # dispara periodicamente
+        self.atirando_timer += 1
+        if self.atirando_timer >= 50:
+            self.atirando_timer = 0
+            tiro = TiroChefao(self.rect.centerx, self.rect.bottom)
+            todos_sprites.add(tiro)
+            inimigos.add(tiro)
+
+    def levar_dano(self):
+        self.vida -= 1
+        if self.vida <= 0:
+            self.kill()
+            explosao = Explosao(self.rect.centerx, self.rect.centery, animacao_morte)
+            todos_sprites.add(explosao)
+            if som_explosao:
+                som_explosao.play()
+
+
+
+# TIRO DO CHEFÃO
+
+class TiroChefao(Entidade):
+    def __init__(self, x, y):
+        super().__init__(x, y, velocidade=6)
+        self.image = pygame.Surface((22, 22))
+        self.image.fill((255, 0, 80))
+        self.rect = self.image.get_rect(center=(x, y))
+
+    def update(self):
+        self.rect.y += self.velocidade
+        if self.rect.y > ALTURA:
+            self.kill()
+
+
+
+# FUNDO
+
 class Fundo(pygame.sprite.Sprite):
     def __init__(self, imagem_path):
         super().__init__()
@@ -337,12 +384,14 @@ class Fundo(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = (0, 0)
 
-# classe para a explosão
+
+
+# EXPLOSÃO
+
 class Explosao(pygame.sprite.Sprite):
     def __init__(self, centro_x, centro_y, animacao_frames):
         super().__init__()
         self.frames = animacao_frames
-
         self.frame_atual = 0
         self.ultima_atualizacao = pygame.time.get_ticks()
         self.velocidade_animacao = 50
@@ -352,45 +401,67 @@ class Explosao(pygame.sprite.Sprite):
 
     def update(self):
         agora = pygame.time.get_ticks()
-
         if agora - self.ultima_atualizacao > self.velocidade_animacao:
             self.ultima_atualizacao = agora
             self.frame_atual += 1
 
             if self.frame_atual < len(self.frames):
-                self.image = self.frames[self.frame_atual]
                 centro = self.rect.center
+                self.image = self.frames[self.frame_atual]
                 self.rect = self.image.get_rect(center=centro)
             else:
                 self.kill()
 
-# carregando imagens do HUD
+
+
+# HUD (inclui barra de vida do chefão)
+
 def desenhar_hud(tela, jogador_vida, pontos, buff_ativo_local, cacadores_local):
-    # coracao
+
+    # corações
     if sprite_coracao and sprite_coracao_vazio:
         x_inicial = 10
         y_pos = 10
-
         for i in range(maximo_vida):
             if i < jogador_vida:
-                sprite_a_desenhar = sprite_coracao
+                sprite = sprite_coracao
             else:
-                sprite_a_desenhar = sprite_coracao_vazio
-            tela.blit(sprite_a_desenhar, (x_inicial + i * 45, y_pos))
-    else:
-        texto_vida = fonte.render(f"Vida: {jogador_vida}", True, (255, 255, 255))
-        tela.blit(texto_vida, (10, 10))
+                sprite = sprite_coracao_vazio
+            tela.blit(sprite, (x_inicial + i * 45, y_pos))
 
-    texto_backup = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
-    tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
+    texto_pontos = fonte.render(f"Pontos: {pontos}", True, (255, 255, 255))
+    tela.blit(texto_pontos, (LARGURA - texto_pontos.get_width() - 10, 10))
 
-    # desenho do status do buff e contador de cacadores
+    # buff joaildo
     if buff_ativo_local:
         texto_buff = fonte.render("BUFF ATIVADO!", True, (255, 255, 0))
-        tela.blit(texto_buff, (LARGURA // 2 - texto_buff.get_width() // 2, 50))
-    
+        tela.blit(texto_buff, (LARGURA//2 - texto_buff.get_width()//2, 50))
 
-# tela game over
+    
+    # BARRA DE VIDA DO CHEFÃO
+    
+    for inimigo in inimigos:
+        if isinstance(inimigo, RoboChefao):
+            vida_max = 30
+            largura = 300
+            altura = 20
+            x = LARGURA // 2 - largura // 2
+            y = 90
+
+            proporcao = inimigo.vida / vida_max
+            largura_atual = int(largura * proporcao)
+
+            pygame.draw.rect(tela, (255, 0, 0), (x, y, largura, altura))
+            pygame.draw.rect(tela, (0, 255, 0), (x, y, largura_atual, altura))
+
+            texto = fonte.render("CHEFÃO", True, (255, 255, 255))
+            tela.blit(texto, (LARGURA//2 - texto.get_width()//2, y - 25))
+            break
+
+
+
+# TELA GAME OVER
+
 def tela_game_over():
     largura_botao = 200
     altura_botao = 60
@@ -412,7 +483,6 @@ def tela_game_over():
         mouse_pos = pygame.mouse.get_pos()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game_over = False
                 pygame.quit()
                 return "sair"
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -424,12 +494,8 @@ def tela_game_over():
 
         TELA.blit(fundo_game_over, (0, 0))
 
-        texto_game_over = fonte.render("GAME OVER", True, (255, 255, 255))
-        TELA.blit(
-            texto_game_over,
-            (LARGURA // 2 - texto_game_over.get_width() // 2,
-             ALTURA // 2 - 100)
-        )
+        txt = fonte.render("GAME OVER", True, (255, 255, 255))
+        TELA.blit(txt, (LARGURA//2 - txt.get_width()//2, ALTURA//2 - 100))
 
         botao_reiniciar.desenhar(TELA, mouse_pos)
         botao_sair.desenhar(TELA, mouse_pos)
@@ -437,40 +503,52 @@ def tela_game_over():
         pygame.display.flip()
         clock.tick(30)
 
+
+
+# RESET DO JOGO
+
 def resetar_jogo():
     global todos_sprites, inimigos, tiros, jogador, pontos, spawn_timer
-    global buff_ativo, buff_inicio, cacadores_eliminados
+    global buff_ativo, buff_inicio, cacadores_eliminados, chefao_spawnado
 
     todos_sprites.empty()
     inimigos.empty()
     tiros.empty()
 
-    # recria fundo
     fundo_sprite = Fundo('sprites/fundo/fundo.png')
     todos_sprites.add(fundo_sprite)
 
-    # recria jogador
     jogador = Jogador(LARGURA // 2, ALTURA - 60)
     todos_sprites.add(jogador)
 
     pontos = 0
     spawn_timer = 0
 
-    # reset do estado do buff / contador ao reiniciar o jogo
     buff_ativo = False
     buff_inicio = 0
     cacadores_eliminados = 0
+    chefao_spawnado = False  # permite novo chefão ao reiniciar
+
     jogador.velocidade = jogador.velocidade_base
+
+
+# INICIALIZAÇÃO DE GRUPOS E VARIÁVEIS
 
 todos_sprites = pygame.sprite.Group()
 inimigos = pygame.sprite.Group()
 tiros = pygame.sprite.Group()
+
+chefao_spawnado = False  # só vai aparecer uma vez por partida
 
 resetar_jogo()
 
 rodando = True
 while rodando:
     clock.tick(FPS)
+
+    # ----------------------------------
+    # EVENTOS
+    # ----------------------------------
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             rodando = False
@@ -483,6 +561,19 @@ while rodando:
                 if som_tiro:
                     som_tiro.play()
 
+    
+    # SPAWN ÚNICO DO CHEFÃO QUANDO PONTOS >= 100
+    
+    if pontos >= 100 and not chefao_spawnado:
+        chefao = RoboChefao(LARGURA // 2, -200, jogador)
+        todos_sprites.add(chefao)
+        inimigos.add(chefao)
+        chefao_spawnado = True
+
+    
+    # SPAWN NORMAL DOS INIMIGOS
+    # (não interfere no chefão)
+    
     spawn_timer += 1
     if spawn_timer > 40:
         tipo = random.choice(["zigue", "lento", "rapido", "saltador", "cacador"])
@@ -499,46 +590,56 @@ while rodando:
         elif tipo == "cacador":
             robo = RoboCacador(x_spawn, -40, jogador)
 
-        todos_sprites.add(robo)
-        inimigos.add(robo)
+        # MAS se o chefão estiver vivo, NÃO gera inimigos normais
+        if not any(isinstance(i, RoboChefao) for i in inimigos):
+            todos_sprites.add(robo)
+            inimigos.add(robo)
+
         spawn_timer = 0
 
-    # colisão tiro x robô
-    colisao = pygame.sprite.groupcollide(inimigos, tiros, True, True)
+    
+    # COLISÃO TIRO DO JOGADOR x INIMIGOS
+    
+    colisao = pygame.sprite.groupcollide(inimigos, tiros, False, True)
 
-    # processa cada robô destruído individualmente
-    for robo_destruido, lista_tiros in colisao.items():
-        # ganha pontos: 1 por robô (ou 2 se buff ativo)
+    for inimigo, lista_tiros in colisao.items():
+
+        # Chefão leva dano, não morre direto
+        if isinstance(inimigo, RoboChefao):
+            for _ in lista_tiros:
+                inimigo.levar_dano()
+            continue
+
+        # Inimigos normais morrem
+        inimigo.kill()
         pontos += 2 if buff_ativo else 1
 
-        # Verifica se é um RoboCacador e conta somente se o buff não está ativo
-        if isinstance(robo_destruido, RoboCacador):
+        # Caçador conta para buff
+        if isinstance(inimigo, RoboCacador):
             if not buff_ativo:
                 cacadores_eliminados += 1
-                # ativa o buff quando atingir o limite
                 if cacadores_eliminados >= CACADORES_PARA_ATIVAR:
                     buff_ativo = True
                     buff_inicio = pygame.time.get_ticks()
-                    # aplica velocidade buff ao jogador
                     jogador.velocidade = jogador.velocidade_buff
-                    # toca o som de Joaildo
                     if som_joaildo:
                         som_joaildo.play()
-                   
-        # animação de explosão
-        centro_x = robo_destruido.rect.centerx
-        centro_y = robo_destruido.rect.centery
 
-        if animacao_morte:
-            explosao = Explosao(centro_x, centro_y, animacao_morte)
-            todos_sprites.add(explosao)
-            if som_explosao:
-                som_explosao.play()
+        # explosão normal
+        cx = inimigo.rect.centerx
+        cy = inimigo.rect.centery
+        explosao = Explosao(cx, cy, animacao_morte)
+        todos_sprites.add(explosao)
+        if som_explosao:
+            som_explosao.play()
 
-    # colisão robô x jogador
+    
+    # COLISÃO INIMIGOS x JOGADOR
+    
     if pygame.sprite.spritecollide(jogador, inimigos, True):
         jogador.vida -= 1
         som_dano.play()
+
         if jogador.vida <= 0:
             som_game_over.play()
             resultado = tela_game_over()
@@ -548,19 +649,20 @@ while rodando:
             else:
                 rodando = False
 
-    # controle da duração do buff (deve estar depois de eventos que podem ativar o buff)
+    
+    # TEMPO DO BUFF
+    
     if buff_ativo:
         if pygame.time.get_ticks() - buff_inicio > buff_duracao:
             buff_ativo = False
-            # voltar velocidade ao normal
             jogador.velocidade = jogador.velocidade_base
-            # zerar o contador para permitir reativação após matar novos cacadores
             cacadores_eliminados = 0
 
-    # atualizar
+    
+    # ATUALIZAÇÃO FINAL
+  
     todos_sprites.update()
 
-    # desenhar
     TELA.blit(fundo_game_over, (0, 0))
     todos_sprites.draw(TELA)
     desenhar_hud(TELA, jogador.vida, pontos, buff_ativo, cacadores_eliminados)
