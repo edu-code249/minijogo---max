@@ -13,25 +13,25 @@ clock = pygame.time.Clock()
 
 # fundo game over
 pygame.mixer.music.load('sons/fundo/musica_fundo.wav')
-pygame.mixer.music.set_volume(0.2)
+pygame.mixer.music.set_volume(10.0)
 pygame.mixer.music.play(-1)
 
 fundo_game_over = pygame.image.load("sprites/fundo/fundo_game_over.png").convert()
 fundo_game_over = pygame.transform.scale(fundo_game_over, (LARGURA, ALTURA))
 som_game_over = pygame.mixer.Sound('sons/game_over/som_game_over.wav')
-som_game_over.set_volume(0.5)
+som_game_over.set_volume(10.0)
 
 som_restart = pygame.mixer.Sound('sons/game_over/som_restart.wav')
-som_restart.set_volume(0.3)
+som_restart.set_volume(5.0)
 
 som_dano = pygame.mixer.Sound('sons/game_over/som_dano.wav')
-som_dano.set_volume(0.2)
+som_dano.set_volume(5.0)
 
 # carregando sprite de morte dos robôs
 animacao_morte = []
 numero_de_frames_morte = 8
 som_explosao = pygame.mixer.Sound('sons/explosao/som_explosao.wav')
-som_explosao.set_volume(0.3)
+som_explosao.set_volume(3.0)
 
 for i in range(1, numero_de_frames_morte + 1):
     img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
@@ -42,7 +42,7 @@ for i in range(1, numero_de_frames_morte + 1):
 animacao_tiro = []
 numero_de_frames_tiro = 4
 som_tiro = pygame.mixer.Sound('sons/tiro/som_tiro.wav')
-som_tiro.set_volume(0.2)
+som_tiro.set_volume(5.0)
 
 for i in range(1, numero_de_frames_tiro + 1):
     img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
@@ -63,7 +63,7 @@ fonte = pygame.font.SysFont(None, 36)
 som_joaildo = None
 try:
     som_joaildo = pygame.mixer.Sound('sons/easteregg/play_joaildo.wav')
-    som_joaildo.set_volume(0.7)
+    som_joaildo.set_volume(10.0)
 except:
     pass
 
