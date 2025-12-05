@@ -73,7 +73,7 @@ buff_duracao = 10000  # duração em ms (10000ms = 10s)
 buff_inicio = 0
 
 cacadores_eliminados = 0
-CACADORES_PARA_ATIVAR = 15  # número de caçadores a eliminar para ativar o Easter Egg
+CACADORES_PARA_ATIVAR = 10  # número de caçadores a eliminar para ativar o Easter Egg
 
 # classe botao
 class Botao:
@@ -385,7 +385,9 @@ def desenhar_hud(tela, jogador_vida, pontos, buff_ativo_local, cacadores_local):
     tela.blit(texto_backup, (LARGURA - 10 - texto_backup.get_width(), 10))
 
     # desenho do status do buff e contador de cacadores
-    status_texto = "BUFF ATIVO!" if buff_ativo_local else f"Cacadores: {cacadores_local}/{CACADORES_PARA_ATIVAR}"
+    if buff_ativo_local:
+        texto_buff = fonte.render("BUFF ATIVADO!", True, (255, 255, 0))
+        tela.blit(texto_buff, (LARGURA // 2 - texto_buff.get_width() // 2, 50))
     
 
 # tela game over
