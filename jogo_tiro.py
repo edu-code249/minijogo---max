@@ -570,9 +570,7 @@ while rodando:
         inimigos.add(chefao)
         chefao_spawnado = True
 
-    
     # SPAWN NORMAL DOS INIMIGOS
-    # (não interfere no chefão)
     
     spawn_timer += 1
     if spawn_timer > 40:
