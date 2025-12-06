@@ -13,41 +13,48 @@ clock = pygame.time.Clock()
 
 # fundo game over
 pygame.mixer.music.load('sons/fundo/musica_fundo.wav')
-pygame.mixer.music.set_volume(0.2)
+pygame.mixer.music.set_volume(10.0)
 pygame.mixer.music.play(-1)
 
 fundo_game_over = pygame.image.load("sprites/fundo/fundo_game_over.png").convert()
 fundo_game_over = pygame.transform.scale(fundo_game_over, (LARGURA, ALTURA))
 som_game_over = pygame.mixer.Sound('sons/game_over/som_game_over.wav')
-som_game_over.set_volume(0.5)
+som_game_over.set_volume(10.0)
 
 som_restart = pygame.mixer.Sound('sons/game_over/som_restart.wav')
-som_restart.set_volume(0.3)
+som_restart.set_volume(5.0)
 
 som_dano = pygame.mixer.Sound('sons/game_over/som_dano.wav')
-som_dano.set_volume(0.2)
+som_dano.set_volume(5.0)
 
 # carregando sprite de morte dos robôs
 animacao_morte = []
+animacao_morte_boss = []
 numero_de_frames_morte = 8
 som_explosao = pygame.mixer.Sound('sons/explosao/som_explosao.wav')
-som_explosao.set_volume(0.3)
+som_explosao.set_volume(3.0)
 
 for i in range(1, numero_de_frames_morte + 1):
     img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
     img = pygame.transform.scale(img, (100, 100))
     animacao_morte.append(img)
 
+for i in range(1, numero_de_frames_morte + 1):
+    img = pygame.image.load(f'sprites/explosao/explosao-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (200, 200))
+    animacao_morte_boss.append(img)
+
 # carregando sprite do tiro
 animacao_tiro = []
 numero_de_frames_tiro = 4
 som_tiro = pygame.mixer.Sound('sons/tiro/som_tiro.wav')
-som_tiro.set_volume(0.2)
+som_tiro.set_volume(5.0)
 
 for i in range(1, numero_de_frames_tiro + 1):
     img = pygame.image.load(f'sprites/tiro/tiro-00{i:02d}.png').convert_alpha()
     img = pygame.transform.scale(img, (32, 32))
     animacao_tiro.append(img)
+
 
 # sprites HUD
 maximo_vida = 5
@@ -63,7 +70,7 @@ fonte = pygame.font.SysFont(None, 36)
 som_joaildo = None
 try:
     som_joaildo = pygame.mixer.Sound('sons/easteregg/play_joaildo.wav')
-    som_joaildo.set_volume(0.7)
+    som_joaildo.set_volume(10.0)
 except:
     pass
 
@@ -101,6 +108,16 @@ class Botao:
 numero_frames_entidade = 4
 
 animacao_player = []
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/player/player-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (50, 60))
+    animacao_player.append(img)
+
+animacao_robo_chefe = []
+for i in range(1, numero_frames_entidade + 1):
+    img = pygame.image.load(f'sprites/boss/boss-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (150, 150))
+    animacao_robo_chefe.append(img)
 
 animacao_robo_lento = []
 for i in range(1, numero_frames_entidade + 1):
@@ -155,8 +172,23 @@ class Jogador(Entidade):
         self.velocidade_base = 5
         self.velocidade_buff = 10
         super().__init__(x, y, self.velocidade_base)
-        self.image.fill((0, 255, 0))
         self.vida = 5
+        global animacao_player
+        self.frames = animacao_player
+        self.frame_atual = 0
+        self.ultima_atualizacao = pygame.time.get_ticks()
+        self.velocidade_animacao = 150
+        self.image = self.frames[self.frame_atual]
+        self.rect = self.image.get_rect(center=(x, y))
+
+    def animar(self):
+        agora = pygame.time.get_ticks()
+        if agora - self.ultima_atualizacao > self.velocidade_animacao:
+            self.ultima_atualizacao = agora
+            self.frame_atual = (self.frame_atual + 1) % len(self.frames)
+            centro = self.rect.center
+            self.image = self.frames[self.frame_atual]
+            self.rect = self.image.get_rect(center=centro)
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -173,6 +205,7 @@ class Jogador(Entidade):
         # limites da tela
         self.rect.x = max(0, min(self.rect.x, LARGURA - 40))
         self.rect.y = max(0, min(self.rect.y, ALTURA - 40))
+        self.animar()
 
 
 
@@ -318,14 +351,10 @@ class RoboCacador(Robo):
 class RoboChefao(Robo):
     def __init__(self, x, y, jogador):
         # usa o sprite do robo lento (ampliado)
-        super().__init__(x, y, velocidade=2, animacao_frames=animacao_robo_lento)
+        super().__init__(x, y, velocidade=2, animacao_frames = animacao_robo_chefe)
         self.jogador = jogador
         self.vida = 30
         self.atirando_timer = 0
-
-        # deixa o boss grande
-        self.image = pygame.transform.scale(self.image, (150, 180))
-        self.rect = self.image.get_rect(center=(x, y))
 
     def atualizar_posicao(self):
         # segue lentamente o jogador
@@ -346,12 +375,13 @@ class RoboChefao(Robo):
             tiro = TiroChefao(self.rect.centerx, self.rect.bottom)
             todos_sprites.add(tiro)
             inimigos.add(tiro)
+            som_tiro.play()
 
     def levar_dano(self):
         self.vida -= 1
         if self.vida <= 0:
             self.kill()
-            explosao = Explosao(self.rect.centerx, self.rect.centery, animacao_morte)
+            explosao = Explosao(self.rect.centerx, self.rect.centery, animacao_morte_boss)
             todos_sprites.add(explosao)
             if som_explosao:
                 som_explosao.play()
