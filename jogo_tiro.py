@@ -202,6 +202,14 @@ for i in range(1, numero_frames_entidade + 1):
 
 
 
+animacao_robo_giratorio = []
+for i in range(1, 2):
+    img = pygame.image.load(f'sprites/robo_lento/robo_l-00{i:02d}.png').convert_alpha()
+    img = pygame.transform.scale(img, (60, 60))
+    animacao_robo_giratorio.append(img)
+
+
+
 
 # CLASSE BASE
 
@@ -505,6 +513,30 @@ class RoboCacador(Robo):
         if self.rect.y > ALTURA:
             self.kill()
 
+class RoboGiratorio(Robo):
+    def __init__(self, x, y):
+        super().__init__(x, y, 3, animacao_robo_giratorio)
+        self.angulo = 0
+        self.velocidade_rotacao = 6
+
+    def animar(self):
+        agora = pygame.time.get_ticks()
+        if agora - self.ultima_atualizacao > self.velocidade_animacao:
+            self.ultima_atualizacao = agora
+            if self.frames:
+                self.frame_atual = (self.frame_atual + 1) % len(self.frames)
+
+        centro = self.rect.center
+
+        base = self.frames[self.frame_atual] if self.frames else self.image
+        self.angulo = (self.angulo + self.velocidade_rotacao) % 360
+        self.image = pygame.transform.rotate(base, self.angulo)
+        self.rect = self.image.get_rect(center=centro)
+
+    def atualizar_posicao(self):
+        self.rect.y += self.velocidade
+        if self.rect.y > ALTURA:
+            self.kill()
 
 
 
@@ -978,7 +1010,7 @@ while rodando:
     
     spawn_timer += 1
     if spawn_timer > 40:
-        tipo = random.choice(["zigue", "lento", "rapido", "saltador", "cacador"])
+        tipo = random.choice(["zigue", "lento", "rapido", "saltador", "cacador", "giratorio"])
         x_spawn = random.randint(40, LARGURA - 40)
 
 
@@ -994,6 +1026,9 @@ while rodando:
             robo = RoboSaltador(x_spawn, -40)
         elif tipo == "cacador":
             robo = RoboCacador(x_spawn, -40, jogador)
+        elif tipo == "giratorio":
+            robo = RoboGiratorio(x_spawn, -40)
+
 
 
 
