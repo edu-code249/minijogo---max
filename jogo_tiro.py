@@ -204,7 +204,7 @@ for i in range(1, numero_frames_entidade + 1):
 
 animacao_robo_giratorio = []
 for i in range(1, 2):
-    img = pygame.image.load(f'sprites/robo_lento/robo_l-00{i:02d}.png').convert_alpha()
+    img = pygame.image.load(f'sprites/robo_circular/robo_c-00{i:02d}.png').convert_alpha()
     img = pygame.transform.scale(img, (60, 60))
     animacao_robo_giratorio.append(img)
 
@@ -691,11 +691,11 @@ class PowerUp(pygame.sprite.Sprite):
         self.tipo = tipo
         self.image = pygame.Surface((30, 30))
         if tipo == "velocidade":
-            self.image.fill((255, 255, 0))  
+            self.image = pygame.image.load(f'sprites/powerups/velocidade.png').convert_alpha()
         elif tipo == "vida":
-            self.image.fill((255, 0, 0))  
+            self.image = pygame.image.load(f'sprites/powerups/vida.png').convert_alpha()
         elif tipo == "tiro_triplo":
-            self.image.fill((0, 255, 0))    
+            self.image = pygame.image.load(f'sprites/powerups/tiro_triplo.png').convert_alpha() 
         self.rect = self.image.get_rect(center=(x, y))
         self.velocidade = 2
 
