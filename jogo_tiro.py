@@ -71,7 +71,7 @@ fonte = pygame.font.SysFont(None, 36)
 som_joaildo = None
 try:
     som_joaildo = pygame.mixer.Sound('sons/easteregg/play_joaildo.wav')
-    som_joaildo.set_volume(10.0)
+    som_joaildo.set_volume(100.0)
 except:
     pass
 
@@ -528,7 +528,7 @@ def desenhar_hud(tela, jogador_vida, pontos, buff_ativo_local, cacadores_local,
     # BARRA DE VIDA DO CHEFÃO
     for inimigo in inimigos:
         if isinstance(inimigo, RoboChefao):
-            vida_max = 30
+            vida_max = 100
             largura = 300
             altura = 20
             x = LARGURA // 2 - largura // 2
